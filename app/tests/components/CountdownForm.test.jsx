@@ -1,35 +1,47 @@
-var expect = require('expect');
 var React = require('react');
-var ReactDOM = require('react-dom');
-var TestUtils = require('react-addons-test-utils');
-var $ = require('jQuery');
-
+var Clock = require('Clock');
 var CountdownForm = require('CountdownForm');
 
-describe('CountdownForm', () => {
-    it('should exist', () => {
-        expect(CountdownForm).toExist();
-    });
+var Countdown = React.createClass({
+    getInitialState: function () {
+        return {
+            count: 0,
+            countdownStatus: 'stopped'
+        };
+    },
+    componentDidUpdate: function (prevProps, prevState) {
+        if (this.state.countdownStatus !== prevState.countdownStatus) {
+            switch (this.state.countdownStatus) {
+                case 'started':
+                    this.startTimer();
+                    break;
+            }
+        }
+    },
+    startTimer: function () {
+        this.timer = setInterval(() => {
+            var newCount = this.state.count - 1;
+            this.setState({
+                count: newCount >= 0 ? newCount : 0
+            });
+        }, 1000);
+    },
+    handleSetCountdown: function (seconds) {
+        this.setState({
+            count: seconds,
+            countdownStatus: 'started'
+        });
+    },
+    render: function () {
+        var {count} = this.state;
 
-    it('should call onSetCountdown if valid seconds entered', () => {
-        var spy = expect.createSpy();
-        var countdownForm = TestUtils.renderIntoDocument(<CountdownForm onSetCountdown={spy}/>);
-        var $el = $(ReactDOM.findDOMNode(countdownForm));
-
-        countdownForm.refs.seconds.value = '109';
-        TestUtils.Simulate.submit($el.find('form')[0]);
-
-        expect(spy).toHaveBeenCalledWith(109);
-    });
-
-    it('should not call onSetCountdown if invalid seconds entered', () => {
-        var spy = expect.createSpy();
-        var countdownForm = TestUtils.renderIntoDocument(<CountdownForm onSetCountdown={spy}/>);
-        var $el = $(ReactDOM.findDOMNode(countdownForm));
-
-        countdownForm.refs.seconds.value = '109b';
-        TestUtils.Simulate.submit($el.find('form')[0]);
-
-        expect(spy).toNotHaveBeenCalled();
-    });
+        return (
+            <div>
+                <Clock totalSeconds={count}/>
+                <CountdownForm onSetCountdown={this.handleSetCountdown}/>
+            </div>
+        );
+    }
 });
+
+module.exports = Countdown;
